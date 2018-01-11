@@ -3,8 +3,10 @@
  */
 
 // Load libraries
-request = require('request');
-
+const request = require('request');
+const download = require('download');
+const fs = require('fs');
+const decompress = require('decompress');
 
 module.exports = {
   // Get the N most starred npm packages
@@ -47,6 +49,29 @@ module.exports = {
               resolve(response.body);
             }
           }
+      });
+    });
+  },
+  getProjectTarball: function (url, path_to_store) {
+    return new Promise((resolve, reject) => {
+      download(url).then(data => {
+        fs.writeFileSync(path_to_store, data);
+      })
+      .then(data => {
+        resolve('Download successful');
+      })
+      .catch(err => {
+        reject('Error downloading tarball: ' + err);
+      });
+    });
+  },
+  extractProjectTarball: function (tarball_path, path_to_store) {
+    return new Promise((resolve, reject) => {
+      decompress(tarball_path, path_to_store).then(data => {
+        resolve('Extract successful');
+      })
+      .catch(err => {
+        reject('Error extracting tarball: ' + err);
       });
     });
   }
