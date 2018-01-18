@@ -25,7 +25,7 @@ module.exports = {
             reject(response.statusCode);
           }
           else{
-            resolve(response.body);
+            resolve(JSON.parse(response.body));
           }
         }
       });
@@ -46,7 +46,7 @@ module.exports = {
               reject(response.statusCode);
             }
             else{
-              resolve(response.body);
+              resolve(JSON.parse(response.body));
             }
           }
       });
