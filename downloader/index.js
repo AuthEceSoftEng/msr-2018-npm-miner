@@ -10,10 +10,10 @@ const decompress = require('decompress');
 
 module.exports = {
   // Get the N most starred npm packages
-  getMostStarredProjectsInfo: function (DB_url, DB_name, numProjects) {
+  getMostStarredProjectsInfo: function (DB_url, DB_name, numProjects, skip = 0) {
     return new Promise((resolve, reject) => {
       request.get({
-        url: DB_url + '/' + DB_name + '/_design/analytics/_view/stars?descending=true&limit=' + numProjects
+        url: DB_url + '/' + DB_name + '/_design/analytics/_view/stars?descending=true&limit=' + numProjects + '&skip=' + skip
         
     }, function(error, response, body){
 
