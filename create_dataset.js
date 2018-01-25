@@ -4,7 +4,6 @@ const dbmanager = require('./dbmanager/index');
 const lib = require('./utilities/library');
 const path = require('path');
 const jssa = require('jssa');
-const jsonfile = require('jsonfile')
 const bfj = require('bfj');
 
 DB_URL = properties.getCouchDBUrl();
@@ -24,7 +23,7 @@ function getRepositorySource(repository_information){
       
       downloader.getProjectTarball(tarball_url, tarball_storage_path + path.sep + tarball_name).then(value => {
         downloader.extractProjectTarball(tarball_storage_path + path.sep + tarball_name, tarball_extract_path + path.sep + repository_name).then(value =>{
-          resolve(repository_information._id + ': Downlad source code completed successfully');
+          resolve(repository_information._id + ': Download source code completed successfully');
         })
         .catch(err => {
           reject('Tarball extract failed');
@@ -72,14 +71,15 @@ function analyze_code(project_name, platform){
             });
           }
           else{
-            jsonfile.writeFile(analysis_storing_path + '\\' + tool_name + ".json", res[tool_name], function (err) {
-              if(err){
-                reject(tool_name + ' results storage failed');
-              }
+            bfj.write(analysis_storing_path + '\\' + tool_name + ".json", res[tool_name], {}).then(() => {
+
+            })
+            .catch(error => {
+              reject(tool_name + ' results storage failed');
             });
           }
         });
-        resolve(project_name + ": Analysis Successfull");
+        resolve(project_name + ": Analysis Successful");
       })
       .catch(err => {
         reject('jssa failed: ' + err);
@@ -91,17 +91,16 @@ function analyze_code(project_name, platform){
   });
 };
 
-function run_full_analysis(DB_URL, DB_name, num_projects){
-  p = downloader.getMostStarredProjectsInfo(DB_URL, DB_name, num_projects);
-  p.then(most_starred_projects_info => {
+function run_full_analysis(DB_URL, DB_name, platform, num_projects, skip){
+  downloader.getMostDownloadedProjectsInfo(DB_URL, DB_name, num_projects, skip).then(most_starred_projects_info => {
     for (var i = 0; i < most_starred_projects_info.rows.length; i++ ){
       var repo = most_starred_projects_info.rows[i];
-      console.log(repo.id + ': Started analysis of repo');
+      console.log(repo.id + ': Started analysis of repo (Project Index: ' + String(i + 1 + skip) + ' )');
       downloader.getProjectInfo(DB_URL, DB_name, repo.id).then(repo_info => {
         var repo_full_name = repo_info.latest_package_json.name + '-' + repo_info.latest_package_json.version
         getRepositorySource(repo_info).then(output => {
           console.log(output);
-          analyze_code(repo_full_name, "WINDOWS").then(analysis_output => {
+          analyze_code(repo_full_name, platform).then(analysis_output => {
             console.log(analysis_output);  
           })
           .catch(err =>{
@@ -113,7 +112,7 @@ function run_full_analysis(DB_URL, DB_name, num_projects){
         });
       })
       .catch(err =>{
-
+        console.log(err);
       });
     }
   })
@@ -123,22 +122,4 @@ function run_full_analysis(DB_URL, DB_name, num_projects){
 } 
 
 // Run full analysis
-run_full_analysis(DB_URL, DB_name, 2);
-
-// var project_name = 'test';
-// //var root = properties.getStoringFolder() + '\\' + project_name + '\\source_code\\raw\\' + project_name + '\\package';
-// var root = properties.getStoringFolder() + '\\test' ;
-// p = lib.get_list_of_js_files(root);
-// p.then(val =>{
-//   jssa.analyze_nsp(root, "WINDOWS").then(out =>{
-//     console.log(JSON.stringify(out, null, 2));
-    
-    
-//   })
-//   .catch(err =>{
-//     console.log(err);
-//   });
-// })
-// .catch(err =>{
-//   console.log(err);
-// });
+run_full_analysis(DB_URL, DB_name, "WINDOWS", 8, 12);
