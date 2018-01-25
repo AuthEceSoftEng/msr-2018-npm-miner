@@ -31,6 +31,28 @@ module.exports = {
       });
     });
   },
+  // Get the N most starred npm packages
+  getMostDownloadedProjectsInfo: function (DB_url, DB_name, numProjects, skip = 0) {
+    return new Promise((resolve, reject) => {
+      request.get({
+        url: DB_url + '/' + DB_name + '/_design/analytics/_view/filteredStars?descending=true&limit=' + numProjects + '&skip=' + skip
+    
+      }, function(error, response, body){
+
+        if(error){
+          reject('Error in communication with couchDB');
+        }
+        else{
+          if (response.statusCode != 200){
+            reject(response.statusCode);
+          }
+          else{
+            resolve(JSON.parse(response.body));
+          }
+        }
+      });
+    });
+  },
   getProjectInfo: function (DB_url, DB_name, project_name) {
     return new Promise((resolve, reject) => {
       request.get({
