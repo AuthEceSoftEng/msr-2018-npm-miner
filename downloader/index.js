@@ -31,7 +31,7 @@ module.exports = {
       });
     });
   },
-  // Get the N most starred npm packages
+  // Get the N most downloaded npm packages
   getMostDownloadedProjectsInfo: function (DB_url, DB_name, numProjects, skip = 0) {
     return new Promise((resolve, reject) => {
       request.get({
@@ -53,6 +53,7 @@ module.exports = {
       });
     });
   },
+  // Get the information of a project
   getProjectInfo: function (DB_url, DB_name, project_name) {
     return new Promise((resolve, reject) => {
       request.get({
@@ -74,6 +75,7 @@ module.exports = {
       });
     });
   },
+  // Download the souce code in compressed format 
   getProjectTarball: function (url, path_to_store) {
     return new Promise((resolve, reject) => {
       download(url).then(data => {
@@ -87,6 +89,7 @@ module.exports = {
       });
     });
   },
+  // Extract a given tarball
   extractProjectTarball: function (tarball_path, path_to_store) {
     return new Promise((resolve, reject) => {
       decompress(tarball_path, path_to_store).then(data => {
