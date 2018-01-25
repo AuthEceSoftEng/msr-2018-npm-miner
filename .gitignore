@@ -59,3 +59,7 @@ typings/
 
 # Results storing directory
 msr_dataset
+data
+
+# Temporary files
+tmp.js
