@@ -9,28 +9,32 @@ const bfj = require('bfj');
 DB_URL = properties.getCouchDBUrl();
 DB_name = properties.getDBName();
 
-function getRepositorySource(repository_information){
+function getRepositorySource(repository_information, repository_index){
 
   return new Promise((resolve, reject) => {
     var repository_name = repository_information.latest_package_json.name + '-' + repository_information.latest_package_json.version;
 
-    init_folder_structure = dbmanager.initRepositoryFolderStructure(properties.getStoringFolder(), repository_name);
+    var low_lim = parseInt(repository_index/100) * 100;
+    var high_lim = parseInt(repository_index/100 + 1) * 100;
+    var storing_folder = properties.getStoringFolder() + path.sep + low_lim + '_' + high_lim + '_repositories';
+    
+    init_folder_structure = dbmanager.initRepositoryFolderStructure(storing_folder, repository_name);
     init_folder_structure.then(value =>{
       var tarball_url = repository_information.latest_package_json.dist.tarball;
       var tarball_name = tarball_url.split('/')[tarball_url.split('/').length - 1];
-      var tarball_storage_path = properties.getStoringFolder() + path.sep + repository_name + path.sep + 'source_code' + path.sep + 'compressed';
-      var tarball_extract_path = properties.getStoringFolder() + path.sep + repository_name + path.sep + 'source_code' + path.sep + 'raw';
+      var tarball_storage_path = storing_folder + path.sep + repository_name + path.sep + 'source_code' + path.sep + 'compressed';
+      var tarball_extract_path = storing_folder + path.sep + repository_name + path.sep + 'source_code' + path.sep + 'raw';
       
       downloader.getProjectTarball(tarball_url, tarball_storage_path + path.sep + tarball_name).then(value => {
         downloader.extractProjectTarball(tarball_storage_path + path.sep + tarball_name, tarball_extract_path + path.sep + repository_name).then(value =>{
           resolve(repository_information._id + ': Download source code completed successfully');
         })
         .catch(err => {
-          reject('Tarball extract failed');
+          reject('Tarball extract failed: ' + err);
         });
       })
       .catch(err => {
-        reject('Download tarball failed');
+        reject('Download tarball failed: ' + err);
       });
     })
     .catch(err => {
@@ -50,11 +54,15 @@ function remove_source(eslint_results_obj){
   });
 };
 
-function analyze_code(project_name, platform){
+function analyze_code(project_name, repository_index, platform){
 
   return new Promise((resolve, reject) => {
-    var project_root = properties.getStoringFolder() + '\\' + project_name + '\\source_code\\raw\\' + project_name + '\\package';
-    var analysis_storing_path = properties.getStoringFolder() + '\\' + project_name + '\\analysis_results'
+    var low_lim = parseInt(repository_index/100) * 100;
+    var high_lim = parseInt(repository_index/100 + 1) * 100;
+    var storing_folder = properties.getStoringFolder() + path.sep + low_lim + '_' + high_lim + '_repositories';
+
+    var project_root = storing_folder + '\\' + project_name + '\\source_code\\raw\\' + project_name + '\\package';
+    var analysis_storing_path = storing_folder + '\\' + project_name + '\\analysis_results'
 
     p = lib.get_list_of_js_files(project_root);
     p.then(val =>{
@@ -99,9 +107,9 @@ function run_full_analysis(DB_URL, DB_name, platform, num_projects, skip){
         console.log(repo.id + ': Started analysis of repo (Project Index: ' + String(i + 1 + skip) + ' )');
         downloader.getProjectInfo(DB_URL, DB_name, repo.id).then(repo_info => {
           var repo_full_name = repo_info.latest_package_json.name + '-' + repo_info.latest_package_json.version
-          getRepositorySource(repo_info).then(output => {
+          getRepositorySource(repo_info, skip + 1).then(output => {
             console.log(output);
-            analyze_code(repo_full_name, platform).then(analysis_output => {
+            analyze_code(repo_full_name, skip + 1, platform).then(analysis_output => {
               console.log(analysis_output);
               resolve(analysis_output)
             })
@@ -124,27 +132,27 @@ function run_full_analysis(DB_URL, DB_name, platform, num_projects, skip){
   });
 } 
 
-let final = [];
-function sequential_execution(arr) {
-  return arr.reduce((promise, item) => {
+function sequential_execution(DB_URL, DB_name, platform, from_index, to_index) {
+  var projects_indexes = []
+  for (var i = from_index - 1; i < to_index; i++){
+    projects_indexes.push(i);
+  }
+  return projects_indexes.reduce((promise, item) => {
     return promise.then((result) => {
-        return run_full_analysis(DB_URL, DB_name, "WINDOWS", 1, 400 + item).then(result => {
-          final.push(result)
-          return result + " Done"
-        })
+      return run_full_analysis(DB_URL, DB_name, platform, 1, item).then(result => {
+        analysis_results.push(result)
+        return result + " Done"
       })
-      .catch(console.error)
+    })
+    .catch(console.error)
   }, Promise.resolve())
 }
-var arr = []
-for (var i = 72; i < 100; i++){
-  arr.push(i);
-}
-//console.log(arr)
-sequential_execution(arr).then( val =>{
-  console.log(final)
+
+// Run full analysis in sequential mode
+let analysis_results = [];
+sequential_execution(DB_URL, DB_name, "WINDOWS", 1, 3).then( val =>{
+  console.log(analysis_results)
 });
 
-
-// Run full analysis in concurrent mode
+// Run full analysis in parallel mode
 //run_full_analysis(DB_URL, DB_name, "WINDOWS", 2, 100);
