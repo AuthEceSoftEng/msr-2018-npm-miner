@@ -92,16 +92,22 @@ function analyze_code(project_name, platform){
 };
 
 function run_full_analysis(DB_URL, DB_name, platform, num_projects, skip){
-  downloader.getMostDownloadedProjectsInfo(DB_URL, DB_name, num_projects, skip).then(most_starred_projects_info => {
-    for (var i = 0; i < most_starred_projects_info.rows.length; i++ ){
-      var repo = most_starred_projects_info.rows[i];
-      console.log(repo.id + ': Started analysis of repo (Project Index: ' + String(i + 1 + skip) + ' )');
-      downloader.getProjectInfo(DB_URL, DB_name, repo.id).then(repo_info => {
-        var repo_full_name = repo_info.latest_package_json.name + '-' + repo_info.latest_package_json.version
-        getRepositorySource(repo_info).then(output => {
-          console.log(output);
-          analyze_code(repo_full_name, platform).then(analysis_output => {
-            console.log(analysis_output);  
+  return new Promise((resolve, reject) => {
+    downloader.getMostDownloadedProjectsInfo(DB_URL, DB_name, num_projects, skip).then(most_starred_projects_info => {
+      for (var i = 0; i < most_starred_projects_info.rows.length; i++ ){
+        var repo = most_starred_projects_info.rows[i];
+        console.log(repo.id + ': Started analysis of repo (Project Index: ' + String(i + 1 + skip) + ' )');
+        downloader.getProjectInfo(DB_URL, DB_name, repo.id).then(repo_info => {
+          var repo_full_name = repo_info.latest_package_json.name + '-' + repo_info.latest_package_json.version
+          getRepositorySource(repo_info).then(output => {
+            console.log(output);
+            analyze_code(repo_full_name, platform).then(analysis_output => {
+              console.log(analysis_output);
+              resolve(analysis_output)
+            })
+            .catch(err =>{
+              console.log(err);
+            });
           })
           .catch(err =>{
             console.log(err);
@@ -110,16 +116,35 @@ function run_full_analysis(DB_URL, DB_name, platform, num_projects, skip){
         .catch(err =>{
           console.log(err);
         });
-      })
-      .catch(err =>{
-        console.log(err);
-      });
-    }
-  })
-  .catch(function(err) {
-    console.log(err);
+      }
+    })
+    .catch(function(err) {
+      console.log(err);
+    });
   });
 } 
 
-// Run full analysis
-run_full_analysis(DB_URL, DB_name, "WINDOWS", 8, 12);
+let final = [];
+function sequential_execution(arr) {
+  return arr.reduce((promise, item) => {
+    return promise.then((result) => {
+        return run_full_analysis(DB_URL, DB_name, "WINDOWS", 1, 400 + item).then(result => {
+          final.push(result)
+          return result + " Done"
+        })
+      })
+      .catch(console.error)
+  }, Promise.resolve())
+}
+var arr = []
+for (var i = 72; i < 100; i++){
+  arr.push(i);
+}
+//console.log(arr)
+sequential_execution(arr).then( val =>{
+  console.log(final)
+});
+
+
+// Run full analysis in concurrent mode
+//run_full_analysis(DB_URL, DB_name, "WINDOWS", 2, 100);
