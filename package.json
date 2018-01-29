@@ -1,0 +1,32 @@
+{
+  "name": "msr-2018-npm-miner",
+  "version": "1.0.0",
+  "description": "",
+  "main": "create_dataset.js",
+  "dependencies": {
+    "bfj": "^5.2.0",
+    "decompress": "^4.2.0",
+    "download": "^6.2.5",
+    "fs": "^0.0.1-security",
+    "is-there": "^4.4.3",
+    "make-dir": "^1.1.0",
+    "jssa": "^1.0.0",
+    "request": "^2.83.0",
+    "walk": "^2.3.9",
+    "jsonfile": "^4.0.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AuthEceSoftEng/msr-2018-npm-miner.git"
+  },
+  "author": "Michail Papamichail",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/AuthEceSoftEng/msr-2018-npm-miner/issues"
+  },
+  "homepage": "https://github.com/AuthEceSoftEng/msr-2018-npm-miner#readme"
+}
