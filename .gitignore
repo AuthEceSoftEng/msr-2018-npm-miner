@@ -63,3 +63,7 @@ data
 
 # Temporary files
 tmp.js
+additional
+
+# Packages information
+packages_info
