@@ -6,8 +6,9 @@ const path = require('path');
 const jssa = require('jssa');
 const bfj = require('bfj');
 
-DB_URL = properties.getCouchDBUrl();
-DB_name = properties.getDBName();
+const DB_URL = properties.getCouchDBUrl();
+const DB_name = properties.getDBName();
+const platform = properties.getPlatform();
 
 function getRepositorySource(repository_information, repository_index){
 
@@ -61,8 +62,8 @@ function analyze_code(project_name, repository_index, platform){
     var high_lim = parseInt(repository_index/100 + 1) * 100;
     var storing_folder = properties.getStoringFolder() + path.sep + low_lim + '_' + high_lim + '_repositories';
 
-    var project_root = storing_folder + '\\' + project_name + '\\source_code\\raw\\' + project_name + '\\package';
-    var analysis_storing_path = storing_folder + '\\' + project_name + '\\analysis_results'
+    var project_root = storing_folder + path.sep + project_name + path.sep + 'source_code' + path.sep + 'raw' + path.sep + project_name + path.sep + 'package';
+    var analysis_storing_path = storing_folder + path.sep + project_name + path.sep + 'analysis_results'
 
     p = lib.get_list_of_js_files(project_root);
     p.then(val =>{
@@ -70,7 +71,7 @@ function analyze_code(project_name, repository_index, platform){
         Array("escomplex", "nsp", "jsinspect", "eslint", "sonarjs").forEach(tool_name => {
           if(tool_name == "eslint"){
             remove_source(res[tool_name]).then(pure =>{
-              bfj.write(analysis_storing_path + '\\' + tool_name + ".json", pure, {}).then(() => {
+              bfj.write(analysis_storing_path + path.sep + tool_name + ".json", pure, {}).then(() => {
 
               })
               .catch(error => {
@@ -79,7 +80,7 @@ function analyze_code(project_name, repository_index, platform){
             });
           }
           else{
-            bfj.write(analysis_storing_path + '\\' + tool_name + ".json", res[tool_name], {}).then(() => {
+            bfj.write(analysis_storing_path + path.sep + tool_name + ".json", res[tool_name], {}).then(() => {
 
             })
             .catch(error => {
@@ -132,13 +133,13 @@ function run_full_analysis(DB_URL, DB_name, platform, num_projects, skip){
   });
 }
 
-function analyze_project_by_name(DB_URL, DB_name, platform, project_name){
+function analyze_project_by_name(DB_URL, DB_name, platform, project_name, index){
   return new Promise((resolve, reject) => {
     downloader.getProjectInfo(DB_URL, DB_name, project_name).then(repo_info => {
       var repo_full_name = repo_info.latest_package_json.name + '-' + repo_info.latest_package_json.version
-      getRepositorySource(repo_info, 150).then(output => {
+      getRepositorySource(repo_info, index).then(output => {
         console.log(output);
-        analyze_code(repo_full_name, 150, "WINDOWS").then(analysis_output => {
+        analyze_code(repo_full_name, index, platform).then(analysis_output => {
           console.log(analysis_output);
           resolve(analysis_output)
         })
@@ -160,8 +161,9 @@ function analyze_from_lib(chunk, platform){
   bfj.read("data" + path.sep + "list_of_packages.json", {}).then(res => {
     return res[chunk].list_of_packages.reduce((promise, item) => {
       var package_name = item.name;
+      var index = parseInt(chunk.split('_')[0], 10) + 10;
       return promise.then((result) => {
-        return analyze_project_by_name(DB_URL, DB_name, platform, package_name).then(result => {
+        return analyze_project_by_name(DB_URL, DB_name, platform, package_name, index).then(result => {
           return result + " Done"
         })
       })
@@ -186,17 +188,22 @@ function sequential_execution(DB_URL, DB_name, platform, from_index, to_index) {
   }, Promise.resolve())
 }
 
-// Run full analysis in sequential mode
+/**
+ * Run full analysis for packages residing in the CouchDB which is continuously updated.
+ * The requested indexes refer to the most downloaded packages (descending order).
+ * 
+ */
 // let analysis_results = [];
-// sequential_execution(DB_URL, DB_name, "WINDOWS", 101, 102).then( val =>{
+// sequential_execution(DB_URL, DB_name, platform, 1, 3).then(val =>{
 //   console.log(analysis_results)
 // });
 
 
-// Run full analysis in parallel mode
-// run_full_analysis(DB_URL, DB_name, "WINDOWS", 2, 100);
-
-
-
-
-//analyze_from_lib("0_100_packages", "WINDOWS");
+/**
+ * Run analysis in order to replicate the existing msr-2018-dataset 
+ * using the information from data/list_of_packages.json
+ * 
+ * The available values for the first argument are:
+ *    0_100_packages, 100_200_packages, ... , 1900_2000_packages   
+ */
+//analyze_from_lib("100_200_packages", platform);

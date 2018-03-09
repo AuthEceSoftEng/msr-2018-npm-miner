@@ -58,7 +58,7 @@ typings/
 .env
 
 # Results storing directory
-msr_dataset
+msr-2018-dataset
 data
 
 # Temporary files
