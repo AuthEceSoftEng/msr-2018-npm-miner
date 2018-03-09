@@ -130,7 +130,45 @@ function run_full_analysis(DB_URL, DB_name, platform, num_projects, skip){
       console.log(err);
     });
   });
-} 
+}
+
+function analyze_project_by_name(DB_URL, DB_name, platform, project_name){
+  return new Promise((resolve, reject) => {
+    downloader.getProjectInfo(DB_URL, DB_name, project_name).then(repo_info => {
+      var repo_full_name = repo_info.latest_package_json.name + '-' + repo_info.latest_package_json.version
+      getRepositorySource(repo_info, 150).then(output => {
+        console.log(output);
+        analyze_code(repo_full_name, 150, "WINDOWS").then(analysis_output => {
+          console.log(analysis_output);
+          resolve(analysis_output)
+        })
+        .catch(err =>{
+          reject(err);
+        });
+      })
+      .catch(err =>{
+        reject(err);
+      });
+    })
+    .catch(err =>{
+      reject(err);
+    });
+  });
+};
+
+function analyze_from_lib(chunk, platform){
+  bfj.read("data" + path.sep + "list_of_packages.json", {}).then(res => {
+    return res[chunk].list_of_packages.reduce((promise, item) => {
+      var package_name = item.name;
+      return promise.then((result) => {
+        return analyze_project_by_name(DB_URL, DB_name, platform, package_name).then(result => {
+          return result + " Done"
+        })
+      })
+      .catch(console.error)
+    }, Promise.resolve())
+  });
+};
 
 function sequential_execution(DB_URL, DB_name, platform, from_index, to_index) {
   var projects_indexes = []
@@ -149,10 +187,16 @@ function sequential_execution(DB_URL, DB_name, platform, from_index, to_index) {
 }
 
 // Run full analysis in sequential mode
-let analysis_results = [];
-sequential_execution(DB_URL, DB_name, "WINDOWS", 1, 3).then( val =>{
-  console.log(analysis_results)
-});
+// let analysis_results = [];
+// sequential_execution(DB_URL, DB_name, "WINDOWS", 101, 102).then( val =>{
+//   console.log(analysis_results)
+// });
+
 
 // Run full analysis in parallel mode
-//run_full_analysis(DB_URL, DB_name, "WINDOWS", 2, 100);
+// run_full_analysis(DB_URL, DB_name, "WINDOWS", 2, 100);
+
+
+
+
+//analyze_from_lib("0_100_packages", "WINDOWS");
