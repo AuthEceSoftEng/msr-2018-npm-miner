@@ -3,6 +3,21 @@
 # msr-2018-dataset
 > This repository contains the source code used to create the "NPM-MINER" dataset submitted at the Data Showcase Track of the "[Mining Software Repositories (MSR)](https://2018.msrconf.org/)" conference.
 
+## The Dataset
+
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.1165550.svg)](https://doi.org/10.5281/zenodo.1165550)
+
+The dataset contains the analysis results of 5 open source software quality tools eslint, escomplex, nsp, jsinspect and sonarjs for 2000 popular (in terms of stars and downloads) npm packages.
+
+## The Paper
+
+The [preprint](http://issel.ee.auth.gr/wp-content/uploads/2018/03/msr2018.pdf).
+
+## The Web Application
+
+[npm-miner](http://npm-miner.com)
+
+
 ## Installation
 In order to use `msr-2018-dataset` follow the next steps:
 1. Clone the repository `AuthEceSoftEng/msr-2018-npm-miner` using the following command:
