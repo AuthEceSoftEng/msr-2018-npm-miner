@@ -1,3 +1,5 @@
+[![Cyclopt rating](https://qaas.cyclopt.com/api/projects/5b0d25d8d9f77a0004f0c108/badge)](https://qaas.cyclopt.com)
+
 # msr-2018-dataset
 > This repository contains the source code used to create the "NPM-MINER" dataset submitted at the Data Showcase Track of the "[Mining Software Repositories (MSR)](https://2018.msrconf.org/)" conference.
 
